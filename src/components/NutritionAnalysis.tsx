@@ -1,0 +1,601 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  AlertCircle,
+  Info,
+  Leaf,
+  ShoppingBag,
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+interface NutritionScore {
+  score: number;
+  color: string;
+  label: string;
+}
+
+interface NutritionAnalysisProps {
+  foodName?: string;
+  foodImage?: string;
+  overallScore?: NutritionScore;
+  nutritionScore?: NutritionScore;
+  processingScore?: NutritionScore;
+  environmentalScore?: NutritionScore;
+  nutritionFacts?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+    sugar: number;
+    sodium: number;
+  };
+  ingredients?: string | string[];
+  allergens?: string[];
+  isPremium?: boolean;
+  barcode?: string;
+  additionalInfo?: {
+    storage: string;
+    manufacturer: string;
+    contactInfo: string;
+    countryOfOrigin: string;
+    quantity: string;
+    certifications: string[];
+    cookingInstructions: string;
+  };
+  onAddToJournal?: () => void;
+  onViewAlternatives?: () => void;
+  onScanAnother?: () => void;
+}
+
+const NutritionAnalysis: React.FC<NutritionAnalysisProps> = ({
+  foodName = "Organic Greek Yogurt",
+  foodImage = "https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=800&q=80",
+  overallScore = { score: 85, color: "bg-green-500", label: "Excellent" },
+  nutritionScore = {
+    score: 90,
+    color: "bg-green-500",
+    label: "Excellent",
+    available: true,
+  },
+  processingScore = {
+    score: 75,
+    color: "bg-yellow-500",
+    label: "Moderate",
+    available: true,
+  },
+  environmentalScore = {
+    score: 85,
+    color: "bg-green-500",
+    label: "Good",
+    available: true,
+  },
+  nutritionFacts = {
+    calories: 120,
+    protein: 15,
+    carbs: 8,
+    fat: 5,
+    fiber: 0,
+    sugar: 6,
+    sodium: 65,
+  },
+  ingredients = [
+    "Organic Milk",
+    "Live Active Cultures",
+    "Vitamin D",
+    "Natural Flavors",
+  ],
+  allergens = ["Milk"],
+  isPremium = false,
+  barcode,
+  additionalInfo,
+  onAddToJournal = () => {},
+  onViewAlternatives = () => {},
+  onScanAnother = () => {},
+}) => {
+  const [showDetails, setShowDetails] = useState(false);
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "bg-green-500";
+    if (score >= 60) return "bg-yellow-500";
+    return "bg-red-500";
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 80) return "Excellent";
+    if (score >= 60) return "Good";
+    if (score >= 40) return "Moderate";
+    return "Poor";
+  };
+
+  return (
+    <div className="bg-background w-full min-h-screen p-4 md:p-6">
+      {/* Version info */}
+      <div className="text-right mb-2">
+        <p className="text-xs text-muted-foreground">
+          Version 1.0.4 - 2023-06-15 16:30:00
+        </p>
+      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="w-full max-w-4xl mx-auto">
+          <CardHeader className="pb-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex-1">
+                <CardTitle className="text-2xl font-bold">{foodName}</CardTitle>
+                <CardDescription>Nutrition Analysis Results</CardDescription>
+                {barcode && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-xs font-medium bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">
+                      Barcode: {barcode}
+                    </span>
+                    <a
+                      href={`https://world.openfoodfacts.org/product/${barcode}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      View on Open Food Facts
+                    </a>
+                  </div>
+                )}
+              </div>
+              <div className="flex-shrink-0 w-24 h-24 rounded-md overflow-hidden">
+                <img
+                  src={foodImage}
+                  alt={foodName}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            {/* Overall Score */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-semibold">Overall Score</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold">
+                    {overallScore.score}
+                  </span>
+                  <Badge className={overallScore.color + " text-white"}>
+                    {overallScore.label}
+                  </Badge>
+                </div>
+              </div>
+              <Progress
+                value={overallScore.score}
+                className={`h-2 ${overallScore.color}`}
+              />
+            </div>
+
+            <Separator className="my-4" />
+
+            {/* Score Breakdown */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {nutritionScore.available && (
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm font-medium">Nutrition</span>
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold">
+                        {nutritionScore.score}
+                      </span>
+                      <div
+                        className={`w-3 h-3 rounded-full ${nutritionScore.color}`}
+                      ></div>
+                    </div>
+                  </div>
+                  <Progress
+                    value={nutritionScore.score}
+                    className={`h-1.5 ${nutritionScore.color}`}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {nutritionScore.label}
+                  </p>
+                </div>
+              )}
+
+              {processingScore.available && (
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm font-medium">Processing</span>
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold">
+                        {processingScore.score}
+                      </span>
+                      <div
+                        className={`w-3 h-3 rounded-full ${processingScore.color}`}
+                      ></div>
+                    </div>
+                  </div>
+                  <Progress
+                    value={processingScore.score}
+                    className={`h-1.5 ${processingScore.color}`}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {processingScore.label}
+                  </p>
+                </div>
+              )}
+
+              {environmentalScore.available && (
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm font-medium">
+                      Environmental Impact
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold">
+                        {environmentalScore.score}
+                      </span>
+                      <div
+                        className={`w-3 h-3 rounded-full ${environmentalScore.color}`}
+                      ></div>
+                    </div>
+                  </div>
+                  <Progress
+                    value={environmentalScore.score}
+                    className={`h-1.5 ${environmentalScore.color}`}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {environmentalScore.label}
+                  </p>
+                </div>
+              )}
+
+              {!nutritionScore.available &&
+                !processingScore.available &&
+                !environmentalScore.available && (
+                  <div className="col-span-2 p-3 bg-muted rounded-md text-center">
+                    <p className="text-muted-foreground">
+                      No scoring information available for this product
+                    </p>
+                  </div>
+                )}
+            </div>
+
+            {/* Basic Nutrition Facts */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">Nutrition Facts</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-muted p-3 rounded-md">
+                  <div className="text-sm text-muted-foreground">Calories</div>
+                  <div className="text-xl font-bold">
+                    {nutritionFacts.calories}
+                  </div>
+                </div>
+                <div className="bg-muted p-3 rounded-md">
+                  <div className="text-sm text-muted-foreground">Protein</div>
+                  <div className="text-xl font-bold">
+                    {nutritionFacts.protein}g
+                  </div>
+                </div>
+                <div className="bg-muted p-3 rounded-md">
+                  <div className="text-sm text-muted-foreground">Carbs</div>
+                  <div className="text-xl font-bold">
+                    {nutritionFacts.carbs}g
+                  </div>
+                </div>
+                <div className="bg-muted p-3 rounded-md">
+                  <div className="text-sm text-muted-foreground">Fat</div>
+                  <div className="text-xl font-bold">{nutritionFacts.fat}g</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Allergens */}
+            {allergens.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                  <h3 className="text-lg font-semibold">Allergens</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {allergens.map((allergen, index) => (
+                    <Badge key={index} variant="destructive">
+                      {allergen}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Ingredients List */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-2">Ingredients</h3>
+              <p className="text-sm text-muted-foreground">
+                {typeof ingredients === "string"
+                  ? ingredients
+                  : ingredients.join(", ")}
+              </p>
+            </div>
+
+            {/* Additional Product Information */}
+            {additionalInfo && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">
+                  Product Information
+                </h3>
+                <div className="space-y-3">
+                  {additionalInfo.quantity && (
+                    <div>
+                      <h4 className="text-sm font-medium">Quantity</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {additionalInfo.quantity}
+                      </p>
+                    </div>
+                  )}
+
+                  {additionalInfo.storage && (
+                    <div>
+                      <h4 className="text-sm font-medium">
+                        Storage Instructions
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {additionalInfo.storage}
+                      </p>
+                    </div>
+                  )}
+
+                  {additionalInfo.cookingInstructions && (
+                    <div>
+                      <h4 className="text-sm font-medium">
+                        Cooking Instructions
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {additionalInfo.cookingInstructions}
+                      </p>
+                    </div>
+                  )}
+
+                  {additionalInfo.manufacturer && (
+                    <div>
+                      <h4 className="text-sm font-medium">Manufacturer</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {additionalInfo.manufacturer}
+                      </p>
+                    </div>
+                  )}
+
+                  {additionalInfo.contactInfo && (
+                    <div>
+                      <h4 className="text-sm font-medium">
+                        Contact Information
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {additionalInfo.contactInfo}
+                      </p>
+                    </div>
+                  )}
+
+                  {additionalInfo.countryOfOrigin && (
+                    <div>
+                      <h4 className="text-sm font-medium">Country of Origin</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {additionalInfo.countryOfOrigin}
+                      </p>
+                    </div>
+                  )}
+
+                  {additionalInfo.certifications &&
+                    additionalInfo.certifications.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium">Certifications</h4>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {additionalInfo.certifications.map((cert, index) => (
+                            <Badge key={index} variant="outline">
+                              {cert}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              </div>
+            )}
+
+            {/* Premium Features Teaser */}
+            {!isPremium && (
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800 mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Info className="h-5 w-5 text-blue-500" />
+                  <h3 className="font-semibold">Unlock Premium Features</h3>
+                </div>
+                <p className="text-sm mb-3">
+                  Get detailed nutrition breakdowns, personalized
+                  recommendations, and more with our premium plan.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-white dark:bg-gray-800"
+                >
+                  Learn More
+                </Button>
+              </div>
+            )}
+
+            {/* Advanced Details (Premium) */}
+            {isPremium && (
+              <div className="mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDetails(!showDetails)}
+                  className="w-full flex items-center justify-between"
+                >
+                  <span>Advanced Nutrition Details</span>
+                  {showDetails ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+
+                {showDetails && (
+                  <div className="mt-4 border rounded-md p-4">
+                    <Tabs defaultValue="macros">
+                      <TabsList className="w-full grid grid-cols-3">
+                        <TabsTrigger value="macros">Macronutrients</TabsTrigger>
+                        <TabsTrigger value="vitamins">Vitamins</TabsTrigger>
+                        <TabsTrigger value="minerals">Minerals</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="macros" className="mt-4">
+                        <Accordion type="single" collapsible>
+                          <AccordionItem value="protein">
+                            <AccordionTrigger>Protein Details</AccordionTrigger>
+                            <AccordionContent>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span>Complete Protein</span>
+                                  <span>Yes</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Essential Amino Acids</span>
+                                  <span>All 9 present</span>
+                                </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="carbs">
+                            <AccordionTrigger>
+                              Carbohydrate Details
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span>Fiber</span>
+                                  <span>{nutritionFacts.fiber}g</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Sugar</span>
+                                  <span>{nutritionFacts.sugar}g</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Added Sugar</span>
+                                  <span>0g</span>
+                                </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="fats">
+                            <AccordionTrigger>Fat Details</AccordionTrigger>
+                            <AccordionContent>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span>Saturated Fat</span>
+                                  <span>3.5g</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Unsaturated Fat</span>
+                                  <span>1.5g</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Trans Fat</span>
+                                  <span>0g</span>
+                                </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </TabsContent>
+                      <TabsContent value="vitamins" className="mt-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex justify-between items-center">
+                            <span>Vitamin D</span>
+                            <Badge className="bg-green-500">20% DV</Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span>Vitamin B12</span>
+                            <Badge className="bg-green-500">15% DV</Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span>Vitamin A</span>
+                            <Badge className="bg-yellow-500">5% DV</Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span>Vitamin C</span>
+                            <Badge className="bg-red-500">0% DV</Badge>
+                          </div>
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="minerals" className="mt-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex justify-between items-center">
+                            <span>Calcium</span>
+                            <Badge className="bg-green-500">25% DV</Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span>Potassium</span>
+                            <Badge className="bg-yellow-500">8% DV</Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span>Sodium</span>
+                            <Badge className="bg-green-500">
+                              {nutritionFacts.sodium}mg (3% DV)
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span>Iron</span>
+                            <Badge className="bg-red-500">0% DV</Badge>
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+
+          <CardFooter className="flex flex-col sm:flex-row gap-3">
+            <Button onClick={onAddToJournal} className="w-full sm:w-auto">
+              <ShoppingBag className="mr-2 h-4 w-4" /> Add to Journal
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onViewAlternatives}
+              className="w-full sm:w-auto"
+            >
+              <Leaf className="mr-2 h-4 w-4" /> View Alternatives
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={onScanAnother}
+              className="w-full sm:w-auto"
+            >
+              <ArrowRight className="mr-2 h-4 w-4" /> Scan Another
+            </Button>
+          </CardFooter>
+        </Card>
+      </motion.div>
+    </div>
+  );
+};
+
+export default NutritionAnalysis;
