@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, Camera, BookOpen, User } from "lucide-react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -224,22 +225,29 @@ const FoodJournal = () => {
         {/* Version info */}
         <div className="text-right mb-2">
           <p className="text-xs text-muted-foreground">
-            Version 1.0.2 - 2023-06-15 14:30:00
+            Version 1.0.5 - 2023-06-15 17:00:00
           </p>
         </div>
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Food Journal</h1>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+            Food Journal
+          </h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:hover:bg-indigo-950 dark:hover:text-indigo-300"
+            >
               <Calendar className="h-4 w-4" />
               {format(selectedDate, "MMMM d, yyyy")}
             </Button>
-            <Button>Add Entry</Button>
+            <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md">
+              Add Entry
+            </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
+          <Card className="border-none shadow-lg bg-gradient-to-r from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Daily Summary</CardTitle>
             </CardHeader>
@@ -267,7 +275,7 @@ const FoodJournal = () => {
             </CardContent>
           </Card>
 
-          <Card className="col-span-1 md:col-span-2">
+          <Card className="col-span-1 md:col-span-2 border-none shadow-lg bg-gradient-to-r from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Nutrition Scores</CardTitle>
             </CardHeader>
@@ -336,12 +344,37 @@ const FoodJournal = () => {
           onValueChange={setActiveTab}
           className="mb-6"
         >
-          <TabsList className="mb-4">
-            <TabsTrigger value="all">All Meals</TabsTrigger>
-            <TabsTrigger value="breakfast">Breakfast</TabsTrigger>
-            <TabsTrigger value="lunch">Lunch</TabsTrigger>
-            <TabsTrigger value="dinner">Dinner</TabsTrigger>
-            <TabsTrigger value="snacks">Snacks</TabsTrigger>
+          <TabsList className="mb-4 bg-muted/50 p-1 rounded-xl">
+            <TabsTrigger
+              value="all"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
+            >
+              All Meals
+            </TabsTrigger>
+            <TabsTrigger
+              value="breakfast"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
+            >
+              Breakfast
+            </TabsTrigger>
+            <TabsTrigger
+              value="lunch"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
+            >
+              Lunch
+            </TabsTrigger>
+            <TabsTrigger
+              value="dinner"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
+            >
+              Dinner
+            </TabsTrigger>
+            <TabsTrigger
+              value="snacks"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
+            >
+              Snacks
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab} className="space-y-6">
@@ -349,13 +382,20 @@ const FoodJournal = () => {
               <div key={index}>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">{mealGroup.title}</h2>
-                  <Button variant="ghost" size="sm">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
+                  >
                     Add to {mealGroup.title}
                   </Button>
                 </div>
                 <div className="space-y-4">
                   {mealGroup.entries.map((entry) => (
-                    <Card key={entry.id}>
+                    <Card
+                      key={entry.id}
+                      className="border-none shadow-md hover:shadow-lg transition-shadow duration-200 bg-gradient-to-r from-white to-gray-50 dark:from-gray-950 dark:to-gray-900"
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-center gap-4">
                           {entry.image ? (
@@ -456,6 +496,48 @@ const FoodJournal = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur-sm shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
+        <div className="container flex h-16 items-center justify-around">
+          <Link to="/" className="flex flex-col items-center">
+            <Button variant="ghost" size="icon" className="h-10 w-10">
+              <Camera className="h-5 w-5" />
+            </Button>
+            <span className="text-xs">Scan</span>
+          </Link>
+
+          <Link to="/journal" className="flex flex-col items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 relative"
+            >
+              <BookOpen className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                3
+              </span>
+            </Button>
+            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+              Journal
+            </span>
+          </Link>
+
+          <Link to="/planning" className="flex flex-col items-center">
+            <Button variant="ghost" size="icon" className="h-10 w-10">
+              <Calendar className="h-5 w-5" />
+            </Button>
+            <span className="text-xs">Planning</span>
+          </Link>
+
+          <Link to="/profile" className="flex flex-col items-center">
+            <Button variant="ghost" size="icon" className="h-10 w-10">
+              <User className="h-5 w-5" />
+            </Button>
+            <span className="text-xs">Profile</span>
+          </Link>
+        </div>
+      </nav>
     </div>
   );
 };

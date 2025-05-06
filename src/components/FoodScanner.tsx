@@ -79,7 +79,7 @@ const FoodScanner = ({ onScanComplete = () => {} }: FoodScannerProps) => {
       {/* Version info */}
       <div className="text-right mb-2">
         <p className="text-xs text-muted-foreground">
-          Version 1.0.2 - 2023-06-15 14:30:00
+          Version 1.0.5 - 2023-06-15 17:00:00
         </p>
       </div>
 

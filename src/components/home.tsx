@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Camera,
   BookOpen,
@@ -21,6 +21,7 @@ import NutritionAnalysis from "./NutritionAnalysis";
 
 const HomePage = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showScanner, setShowScanner] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [scannedProduct, setScannedProduct] = useState(null);
@@ -286,10 +287,12 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-sm shadow-sm">
         <div className="container flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold">NutriScan</h1>
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+              NutriScan
+            </h1>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon">
@@ -315,7 +318,7 @@ const HomePage = () => {
           <>
             <div className="mb-8 flex justify-center">
               <Button
-                className="h-24 w-24 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
+                className="h-24 w-24 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
                 onClick={() => setShowScanner(true)}
                 disabled={isLoading}
               >
@@ -366,13 +369,7 @@ const HomePage = () => {
               allergens={scannedProduct.allergens}
               barcode={scannedProduct.barcode}
               additionalInfo={scannedProduct.additionalInfo}
-              onAddToJournal={() => {
-                toast({
-                  title: "Added to Journal",
-                  description: `${scannedProduct.name} has been added to your food journal.`,
-                });
-                setShowProductDetails(false);
-              }}
+              onAddToJournal={() => {}} // This is now handled in NutritionAnalysis component
               onViewAlternatives={() => {
                 toast({
                   title: "Feature Coming Soon",
@@ -486,11 +483,11 @@ const HomePage = () => {
 
       {/* Version info */}
       <div className="text-center py-2 text-xs text-muted-foreground">
-        <p>Version 1.0.4 - 2023-06-15 16:30:00</p>
+        <p>Version 1.0.5 - 2023-06-15 17:00:00</p>
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t bg-background">
+      <nav className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur-sm shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
         <div className="container flex h-16 items-center justify-around">
           <Link to="/" className="flex flex-col items-center">
             <Button variant="ghost" size="icon" className="h-10 w-10">
@@ -500,8 +497,11 @@ const HomePage = () => {
           </Link>
 
           <Link to="/journal" className="flex flex-col items-center">
-            <Button variant="ghost" size="icon" className="h-10 w-10">
+            <Button variant="ghost" size="icon" className="h-10 w-10 relative">
               <BookOpen className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                3
+              </span>
             </Button>
             <span className="text-xs">Journal</span>
           </Link>

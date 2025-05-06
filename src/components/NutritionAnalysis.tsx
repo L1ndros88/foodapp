@@ -21,6 +21,7 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
+  Clock,
 } from "lucide-react";
 import {
   Accordion,
@@ -28,12 +29,28 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-
-interface NutritionScore {
-  score: number;
-  color: string;
-  label: string;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import { NutritionScore, NutritionFacts, AdditionalInfo } from "@/lib/types";
 
 interface NutritionAnalysisProps {
   foodName?: string;
@@ -42,28 +59,12 @@ interface NutritionAnalysisProps {
   nutritionScore?: NutritionScore;
   processingScore?: NutritionScore;
   environmentalScore?: NutritionScore;
-  nutritionFacts?: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    fiber: number;
-    sugar: number;
-    sodium: number;
-  };
+  nutritionFacts?: NutritionFacts;
   ingredients?: string | string[];
   allergens?: string[];
   isPremium?: boolean;
   barcode?: string;
-  additionalInfo?: {
-    storage: string;
-    manufacturer: string;
-    contactInfo: string;
-    countryOfOrigin: string;
-    quantity: string;
-    certifications: string[];
-    cookingInstructions: string;
-  };
+  additionalInfo?: AdditionalInfo;
   onAddToJournal?: () => void;
   onViewAlternatives?: () => void;
   onScanAnother?: () => void;
@@ -115,6 +116,15 @@ const NutritionAnalysis: React.FC<NutritionAnalysisProps> = ({
   onScanAnother = () => {},
 }) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [showAddToJournalDialog, setShowAddToJournalDialog] = useState(false);
+  const [mealType, setMealType] = useState("breakfast");
+  const [servingSize, setServingSize] = useState("1");
+  const [servingUnit, setServingUnit] = useState("serving");
+  const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "bg-green-500";
@@ -129,12 +139,101 @@ const NutritionAnalysis: React.FC<NutritionAnalysisProps> = ({
     return "Poor";
   };
 
+  const handleAddToJournal = async () => {
+    setIsSubmitting(true);
+    try {
+      // Get current user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to add items to your journal",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // First, save the food item
+      const { data: foodItem, error: foodItemError } = await supabase
+        .from("food_items")
+        .insert({
+          user_id: user.id,
+          name: foodName,
+          barcode: barcode,
+          image_url: foodImage,
+          calories: nutritionFacts?.calories,
+          protein: nutritionFacts?.protein,
+          carbs: nutritionFacts?.carbs,
+          fat: nutritionFacts?.fat,
+          fiber: nutritionFacts?.fiber,
+          sugar: nutritionFacts?.sugar,
+          sodium: nutritionFacts?.sodium,
+          ingredients:
+            typeof ingredients === "string"
+              ? ingredients
+              : ingredients?.join(", "),
+          allergens: allergens,
+          overall_score: overallScore?.score,
+          nutrition_score: nutritionScore?.score,
+          processing_score: processingScore?.score,
+          environmental_score: environmentalScore?.score,
+        })
+        .select("id")
+        .single();
+
+      if (foodItemError) {
+        throw new Error(foodItemError.message);
+      }
+
+      // Then, create the journal entry
+      const { error: journalError } = await supabase
+        .from("journal_entries")
+        .insert({
+          user_id: user.id,
+          food_item_id: foodItem.id,
+          meal_type: mealType,
+          serving_size: parseFloat(servingSize),
+          serving_unit: servingUnit,
+          consumed_at: new Date().toISOString(),
+          notes: notes,
+        });
+
+      if (journalError) {
+        throw new Error(journalError.message);
+      }
+
+      toast({
+        title: "Added to Journal",
+        description: `${foodName} has been added to your food journal.`,
+      });
+
+      setShowAddToJournalDialog(false);
+
+      // Navigate to journal page after a short delay
+      setTimeout(() => {
+        navigate("/journal");
+      }, 1000);
+    } catch (error) {
+      console.error("Error adding to journal:", error);
+      toast({
+        title: "Error",
+        description: `Failed to add item to journal: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="bg-background w-full min-h-screen p-4 md:p-6">
       {/* Version info */}
       <div className="text-right mb-2">
         <p className="text-xs text-muted-foreground">
-          Version 1.0.4 - 2023-06-15 16:30:00
+          Version 1.0.5 - 2023-06-15 17:00:00
         </p>
       </div>
       <motion.div
@@ -574,20 +673,122 @@ const NutritionAnalysis: React.FC<NutritionAnalysisProps> = ({
           </CardContent>
 
           <CardFooter className="flex flex-col sm:flex-row gap-3">
-            <Button onClick={onAddToJournal} className="w-full sm:w-auto">
-              <ShoppingBag className="mr-2 h-4 w-4" /> Add to Journal
-            </Button>
+            <Dialog
+              open={showAddToJournalDialog}
+              onOpenChange={setShowAddToJournalDialog}
+            >
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md">
+                  <ShoppingBag className="mr-2 h-4 w-4" /> Add to Journal
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Add to Food Journal</DialogTitle>
+                  <DialogDescription>
+                    Add {foodName} to your food journal. Select meal type and
+                    serving information.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="meal-type" className="text-right">
+                      Meal
+                    </Label>
+                    <Select value={mealType} onValueChange={setMealType}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select meal type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="breakfast">Breakfast</SelectItem>
+                        <SelectItem value="lunch">Lunch</SelectItem>
+                        <SelectItem value="dinner">Dinner</SelectItem>
+                        <SelectItem value="snack">Snack</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="serving-size" className="text-right">
+                      Serving
+                    </Label>
+                    <Input
+                      id="serving-size"
+                      type="number"
+                      min="0.25"
+                      step="0.25"
+                      value={servingSize}
+                      onChange={(e) => setServingSize(e.target.value)}
+                      className="col-span-1"
+                    />
+                    <Select
+                      value={servingUnit}
+                      onValueChange={setServingUnit}
+                      className="col-span-2"
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="serving">serving</SelectItem>
+                        <SelectItem value="g">grams</SelectItem>
+                        <SelectItem value="oz">ounces</SelectItem>
+                        <SelectItem value="cup">cups</SelectItem>
+                        <SelectItem value="tbsp">tablespoons</SelectItem>
+                        <SelectItem value="tsp">teaspoons</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="time" className="text-right">
+                      Time
+                    </Label>
+                    <div className="col-span-3 flex items-center gap-2 text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>Now</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="notes" className="text-right">
+                      Notes
+                    </Label>
+                    <Input
+                      id="notes"
+                      placeholder="Optional notes"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="col-span-3"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAddToJournalDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAddToJournal}
+                    disabled={isSubmitting}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  >
+                    {isSubmitting ? "Adding..." : "Add to Journal"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             <Button
               variant="outline"
               onClick={onViewAlternatives}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:hover:bg-indigo-950 dark:hover:text-indigo-300"
             >
               <Leaf className="mr-2 h-4 w-4" /> View Alternatives
             </Button>
             <Button
               variant="secondary"
               onClick={onScanAnother}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 dark:from-gray-800 dark:to-gray-700 dark:hover:from-gray-700 dark:hover:to-gray-600"
             >
               <ArrowRight className="mr-2 h-4 w-4" /> Scan Another
             </Button>
